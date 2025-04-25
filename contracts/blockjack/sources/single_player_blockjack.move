@@ -135,6 +135,32 @@ module blackjack::single_player_blackjack {
         transfer::share_object(house_data);
     }
 
+    /// Function used to top up the house balance. Can be called by anyone.
+    /// House can have multiple accounts so giving the treasury balance is not limited.
+    /// @param house_data: The HouseData object
+    /// @param coin: The coin object that will be used to top up the house balance. The entire coin is consumed
+    public entry fun top_up(house_data: &mut HouseData, coin: Coin<SUI>, _: &mut TxContext) {
+        let balance = coin.into_balance();
+        house_data.balance.join(balance);
+    }
+
+    /// House can withdraw the entire balance of the house object
+    /// @param house_data: The HouseData object
+    public entry fun withdraw(house_data: &mut HouseData, ctx: &mut TxContext) {
+        // only the house address can withdraw funds
+        assert!(ctx.sender() == house_data.house, ECallerNotHouse);
+        let total_balance = house_data.balance.value();
+        let coin = coin::take(&mut house_data.balance, total_balance, ctx);
+        transfer::public_transfer(coin, house_data.house);
+    }
+
+    /// Function used to create a new game. The player must provide a random vector of bytes.
+    /// Stake is taken from the player's coin and added to the game's stake. The house's stake is also added to the game's stake.
+    /// @param user_randomness: A vector of randomly produced bytes that will be used to calculate the result of the VRF
+    /// @param user_counter: A user counter object that serves as additional source of randomness.
+    /// @param user_bet: The coin object that will be used to take the player's stake
+    /// @param house_data: The HouseData object
+
     /// Function used to create a new game. The player must provide a random vector of bytes.
     /// Stake is taken from the player's coin and added to the game's stake. The house's stake is also added to the game's stake.
     /// @param user_randomness: A vector of randomly produced bytes that will be used to calculate the result of the VRF
