@@ -397,6 +397,22 @@ module blackjack::single_player_blackjack {
     }
     
     // --------------- For Testing ---------------
+    #[test_only]
+    public fun get_and_transfer_house_admin_cap_for_testing(ctx: &mut TxContext) {
+        let house_cap = HouseAdminCap {
+            id: object::new(ctx)
+        };
+        transfer::transfer(house_cap, ctx.sender());
+    }
+
+    #[test_only]
+    public fun set_game_randomness_for_testing(
+        new_randomness: vector<u8>,
+        game: &mut Game,
+        _ctx: &mut TxContext
+    ) {
+        game.user_randomness = new_randomness;
+    }
 }    
 
 
