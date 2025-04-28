@@ -208,6 +208,47 @@ module blackjack::single_player_blackjack {
         transfer::share_object(new_game);
     }
 
+    public fun hit(
+        game: &mut Game,
+        bls_sig: vector<u8>,
+        house_data: &mut HouseData,
+        hit_request: HitRequest,
+        ctx: &mut TxContext
+    ) {
+
+        // Verify the BLS signature by admin
+        let mut messageVector = game.user_randomness;
+        messageVector.append(game.game_counter_vector());
+        let is_sig_valid = bls12381_min_pk_verify(&bls_sig, &house_data.public_key, &messageVector);
+        assert!(is_sig_valid, EInvalidBlsSig);
+
+        assert!(game.status == IN_PROGRESS, EGameHasFinished);
+
+        // Verify the HitRequest against the Game object and burn it
+        let HitRequest { id, game_id, current_player_sum } = hit_request;
+        assert!(game_id == object::id(game), EInvalidGameOfHitRequest);
+        assert!(current_player_sum == game.player_sum, EInvalidSumOfHitRequest);
+        object::delete(id);
+
+        //Hash the signature before using it
+        let hashed_sign = blake2b256(&bls_sig);
+        let (card, _) = get_next_random_card(&hashed_sign);
+        game.player_cards.push_back(card);
+        game.player_sum = get_card_sum(&game.player_cards);
+        event::emit(HitDoneEvent {
+            game_id: object::uid_to_inner(&game.id),
+            current_player_hand_sum: game.player_sum,
+            player_cards: game.player_cards
+        });
+        //on twenty-one, hit option to be disabled via UI
+        if (game.player_sum > 21) {
+            game.house_won_post_handling(house_data, ctx);
+        } else {
+            game.counter = game.counter + 1;
+        }
+    }
+
+
     /// Returns next Card from the hashed byte array after re-hashing it
     ///
     /// @param hashed_byte_array: The hashed byte array
@@ -329,7 +370,7 @@ module blackjack::single_player_blackjack {
     }
 
     // --------------- Accessors ---------------
-
+    
     
     // --------------- For Testing ---------------
 }    
