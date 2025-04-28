@@ -370,7 +370,31 @@ module blackjack::single_player_blackjack {
     }
 
     // --------------- Accessors ---------------
-    
+    /// Returns a vector containing the game counter
+    /// @param game: A Game object
+    public fun game_counter_vector(game: &Game): vector<u8> {
+        let mut simple_vec = vector[];
+        simple_vec.push_back(game.counter);
+        simple_vec
+    }
+
+    /// Returns the player's randomn bytes input
+    /// @param game: A Game object
+    public fun user_randomness(game: &Game): vector<u8> {
+        game.user_randomness
+    }
+
+    /// Returns the balance of the house
+    /// @param house_data: The HouseData object
+    public fun balance(house_data: &HouseData): u64 {
+        house_data.balance.value()
+    }
+
+    /// Returns the address of the house
+    /// @param house_data: The HouseData object
+    public fun house(house_data: &HouseData): address {
+        house_data.house
+    }
     
     // --------------- For Testing ---------------
 }    
