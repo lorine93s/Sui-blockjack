@@ -466,6 +466,63 @@ module blackjack::single_player_blackjack {
     ) {
         game.user_randomness = new_randomness;
     }
+
+    #[test_only]
+    public fun draw_card_for_testing(
+        game: &mut Game,
+        is_dealer: bool,
+        card_idx: u8,
+    ) {
+        if (!is_dealer) {
+            game.player_cards.push_back(card_idx);
+            game.player_sum = get_card_sum(&game.player_cards);
+        } else {
+            game.dealer_cards.push_back(card_idx);
+            game.dealer_sum = get_card_sum(&game.dealer_cards);
+        };
+    }
+
+    #[test_only]
+    public fun pop_card_for_testing(
+        game: &mut Game,
+        is_dealer: bool
+    ) {
+        if (!is_dealer) {
+            assert!(!game.player_cards.is_empty(), 0);
+            game.player_cards.pop_back();
+            game.player_sum = get_card_sum(&game.player_cards);
+        } else {
+            assert!(!game.dealer_cards.is_empty(), 0);
+            game.dealer_cards.pop_back();
+            game.dealer_sum = get_card_sum(&game.dealer_cards);
+        };
+    }
+
+    #[test_only]
+    public fun player_won_post_handling_for_test(
+        game: &mut Game,
+        ctx: &mut TxContext
+    ) {
+        player_won_post_handling(game, b"Player won!", ctx);
+    }
+
+    #[test_only]
+    public fun house_won_post_handling_for_test(
+        game: &mut Game,
+        house_data: &mut HouseData,
+        ctx: &mut TxContext
+    ) {
+        house_won_post_handling(game, house_data, ctx);
+    }
+
+    #[test_only]
+    public fun tie_post_handling_for_test(
+        game: &mut Game,
+        house_data: &mut HouseData,
+        ctx: &mut TxContext
+    ) {
+        tie_post_handling(game, house_data, ctx);
+    }
 }    
 
 
