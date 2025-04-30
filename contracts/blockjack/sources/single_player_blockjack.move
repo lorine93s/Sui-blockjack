@@ -396,6 +396,59 @@ module blackjack::single_player_blackjack {
         house_data.house
     }
     
+    /// Returns the public key of the house
+    /// @param house_data: The HouseData object
+    public fun public_key(house_data: &HouseData): vector<u8> {
+        house_data.public_key
+    }
+
+    /// Game accessors
+    public fun player(game: &Game): address {
+        game.player
+    }
+
+    public fun player_cards(game: &Game): vector<u8> {
+        game.player_cards
+    }
+
+    public fun player_sum(game: &Game): u8 {
+        game.player_sum
+    }
+
+    public fun dealer_cards(game: &Game): vector<u8> {
+        game.dealer_cards
+    }
+
+    public fun dealer_sum(game: &Game): u8 {
+        game.dealer_sum
+    }
+
+    public fun status(game: &Game): u8 {
+        game.status
+    }
+
+    public fun total_stake(game: &Game): u64 {
+        game.total_stake.value()
+    }
+
+    // HitRequest accessors
+    public fun hit_request_game_id(hit_request: &HitRequest): ID {
+        hit_request.game_id
+    }
+
+    public fun hit_request_current_player_sum(hit_request: &HitRequest): u8 {
+        hit_request.current_player_sum
+    }
+
+    // StandRequest accessors
+    public fun stand_request_game_id(stand_request: &StandRequest): ID {
+        stand_request.game_id
+    }
+
+    public fun stand_request_current_player_sum(stand_request: &StandRequest): u8 {
+        stand_request.current_player_sum
+    }
+
     // --------------- For Testing ---------------
     #[test_only]
     public fun get_and_transfer_house_admin_cap_for_testing(ctx: &mut TxContext) {
