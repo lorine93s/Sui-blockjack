@@ -1,103 +1,155 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useBlackjackGame } from "@/hooks/useBlackjackGame";
+import { Spinner } from "../components/general/Spinner";
+import { SignInBanner } from "../components/home/SignInBanner";
+import { DealerCards } from "../components/home/DealerCards";
+import { PlayerCards } from "../components/home/PlayerCards";
+import { GameActions } from "../components/home/GameActions";
 import Image from "next/image";
+import { BlackjackBanner } from "@/components/home/BlackjackBanner";
+import { useZkLogin } from "@mysten/enoki/react";
+import { useBalance } from "@/contexts/BalanceContext";
+import { SuiExplorerLink } from "@/components/general/SuiExplorerLink";
+import BigNumber from "bignumber.js";
+import { SetupGame } from "@/components/home/SetupGame";
+import Link from "next/link";
 
-export default function Home() {
+const HomePage = () => {
+  const { address } = useZkLogin();
+  const { balance, handleRefreshBalance } = useBalance();
+  const {
+    game,
+    isLoading,
+    handleCreateGame,
+    isCreateGameLoading,
+    isInitialDealLoading,
+    counterId,
+    isCounterIdLoading,
+    isCreateCounterLoading,
+    handleCreateCounter,
+    handleHit,
+    handleStand,
+    isMoveLoading,
+  } = useBlackjackGame();
+
+  const [showingBlackjackBanner, setShowingBlackjackBanner] = useState(false);
+  const handleShowBlackjackBanner = () => setShowingBlackjackBanner(true);
+  const handleHideBlackjackBanner = () => setShowingBlackjackBanner(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      handleRefreshBalance();
+    }, 2000);
+  }, [game?.status]);
+
+  useEffect(() => {
+    if (
+      game?.player_sum === 21 &&
+      game?.player_cards?.length === 2 &&
+      game?.status === 1
+    ) {
+      handleShowBlackjackBanner();
+    }
+  }, [game?.player_sum, game?.status]);
+
+  if (!address) {
+    return <SignInBanner />;
+  }
+
+  if (isCounterIdLoading) {
+    return <Spinner />;
+  }
+
+  if (balance.isLessThan(BigNumber(0.5)) || !counterId || !game) {
+    return (
+      <SetupGame
+        balance={balance}
+        counterId={counterId}
+        handleCreateCounter={handleCreateCounter}
+        isCreateCounterLoading={isCreateCounterLoading}
+        game={game}
+        isLoading={isLoading}
+        handleCreateGame={handleCreateGame}
+        isCreateGameLoading={isCreateGameLoading}
+      />
+    );
+  }
+
+  if (showingBlackjackBanner) {
+    return (
+      <BlackjackBanner game={game} handleHide={handleHideBlackjackBanner} />
+    );
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="relative min-h-[60vh] text-center font-bold text-xl">
+      <div className="mx-auto absolute right-10 top-0">
+        <div className="relative">
+          <Image
+            src="/general/cards-stack.svg"
+            alt="cards-stack"
+            width={227}
+            height={170}
+          />
+          {(isLoading || isMoveLoading || isInitialDealLoading) && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 translate-x-30px translate-y-5px">
+              <Spinner />
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </div>
+      <div className="relative space-y-[55px]">
+        <DealerCards
+          cards={game.dealer_cards}
+          points={game.dealer_sum}
+          won={game.status === 2}
+          lost={game.status === 1}
+        />
+        <PlayerCards
+          cards={game.player_cards}
+          points={game.player_sum}
+          won={game.status === 1}
+          lost={game.status === 2}
+        />
+        {game.status === 0 && (
+          <GameActions
+            handleHit={handleHit}
+            handleStand={handleStand}
+            isMoveLoading={isMoveLoading || isInitialDealLoading}
+            playerPoints={game.player_sum}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        )}
+        {game.status !== 0 && (
+          <div className="flex flex-col items-center space-y-[20px]">
+            <div className="flex flex-col items-center space-y-[5px]">
+              <div className="text-gray-100">The game is finished!</div>
+              {game.status === 3 && (
+                <div className="text-gray-300">It&apos;s a tie!</div>
+              )}
+              <div className="flex space-x-1 items-center">
+                <div className="text-gray-100 text-sm">
+                  Object on Sui Explorer:
+                </div>
+                <SuiExplorerLink
+                  objectId={game.id.id}
+                  type="object"
+                  className="!text-gray-300 text-sm"
+                />
+              </div>
+            </div>
+            <Link
+              href="/new"
+              className="w-[200px] text-sm rounded-full px-4 py-3 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              New game
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default HomePage;
